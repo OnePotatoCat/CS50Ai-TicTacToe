@@ -13,6 +13,7 @@ def initial_state():
     """
     Returns starting state of the board.
     """
+
     return [[EMPTY, EMPTY, EMPTY],
             [EMPTY, EMPTY, EMPTY],
             [EMPTY, EMPTY, EMPTY]]
@@ -35,14 +36,13 @@ def actions(board):
     """
     Returns set of all possible actions (i, j) available on the board.
     """
+    available_actions = set()
     i = 0
-    j = 0
-    available_actions = [()]
-
     for row in board:
+        j = 0
         for cell in row:
             if cell == EMPTY:
-                available_actions.append(i, j)
+                available_actions.add((i, j))
             j += 1
         i += 1
     return available_actions
@@ -54,7 +54,7 @@ def result(board, action):
     """
     new_board = copy.deepcopy(board)
     if new_board[action[0]][action[1]] == EMPTY:
-        new_board[action[0]][action[1]] = "X"
+        new_board[action[0]][action[1]] = player(board)
     else:
         raise Exception("The space is occupied")
 
@@ -66,22 +66,22 @@ def winner(board):
     Returns the winner of the game, if there is one.
     """
     if (board[0][0] == X and board[0][0] == board[0][1] and board[0][1] == board[0][2]) or\
-       (board[0][0] == X and board[1][0] == board[1][1] and board[1][1] == board[1][2]) or\
-       (board[0][0] == X and board[2][0] == board[2][1] and board[2][1] == board[2][2]) or\
+       (board[1][0] == X and board[1][0] == board[1][1] and board[1][1] == board[1][2]) or\
+       (board[2][0] == X and board[2][0] == board[2][1] and board[2][1] == board[2][2]) or\
        (board[0][0] == X and board[0][0] == board[1][0] and board[1][0] == board[2][0]) or\
-       (board[0][0] == X and board[0][1] == board[1][1] and board[1][1] == board[2][1]) or\
-       (board[0][0] == X and board[0][2] == board[1][2] and board[1][2] == board[2][2]) or\
+       (board[0][1] == X and board[0][1] == board[1][1] and board[1][1] == board[2][1]) or\
+       (board[0][2] == X and board[0][2] == board[1][2] and board[1][2] == board[2][2]) or\
        (board[0][0] == X and board[0][0] == board[1][1] and board[1][1] == board[2][2]) or\
-       (board[0][0] == X and board[2][0] == board[1][1] and board[1][1] == board[0][2]):
+       (board[2][0] == X and board[2][0] == board[1][1] and board[1][1] == board[0][2]):
         return X
     if (board[0][0] == O and board[0][0] == board[0][1] and board[0][1] == board[0][2]) or\
-       (board[0][0] == O and board[1][0] == board[1][1] and board[1][1] == board[1][2]) or\
-       (board[0][0] == O and board[2][0] == board[2][1] and board[2][1] == board[2][2]) or\
+       (board[1][0] == O and board[1][0] == board[1][1] and board[1][1] == board[1][2]) or\
+       (board[2][0] == O and board[2][0] == board[2][1] and board[2][1] == board[2][2]) or\
        (board[0][0] == O and board[0][0] == board[1][0] and board[1][0] == board[2][0]) or\
-       (board[0][0] == O and board[0][1] == board[1][1] and board[1][1] == board[2][1]) or\
-       (board[0][0] == O and board[0][2] == board[1][2] and board[1][2] == board[2][2]) or\
+       (board[0][1] == O and board[0][1] == board[1][1] and board[1][1] == board[2][1]) or\
+       (board[0][2] == O and board[0][2] == board[1][2] and board[1][2] == board[2][2]) or\
        (board[0][0] == O and board[0][0] == board[1][1] and board[1][1] == board[2][2]) or\
-       (board[0][0] == O and board[2][0] == board[1][1] and board[1][1] == board[0][2]):
+       (board[2][0] == O and board[2][0] == board[1][1] and board[1][1] == board[0][2]):
         return O
 
     return None
@@ -91,7 +91,7 @@ def terminal(board):
     """
     Returns True if game is over, False otherwise.
     """
-    if winner(board) is None:
+    if winner(board) is not None:
         return True
 
     if len(actions(board)) == 0:
@@ -106,27 +106,54 @@ def utility(board):
     """
     if winner(board) == X:
         return 1
-
-    if winner(board) == O:
+    elif winner(board) == O:
         return -1
-
-    return 0
+    else:
+        return 0
 
 
 def minimax(board):
     """
     Returns the optimal action for the current player on the board.
+    X is the maximizer
+    O is the minimizer
     """
-    if player(board) == X:
-        target = 1
-    elif player(board) == O:
-        target = -1
     if terminal(board):
         return None
 
-    available_moves = actions(board)
-    for move in available_moves:
-        if player(board):
-            if utility(result(board, move)) == target:
-                return
+    plays = []
+    if player(board) == X:
+        for action in actions(board):
+            value = minimizer(result(board, action))
+            if value == 1:
+                return action
+            plays.append([value, action])
+        return sorted(plays, key=lambda x: x[0], reverse=True)[0][1]
 
+    elif player(board) == O:
+        for action in actions(board):
+            value = maximizer(result(board, action))
+            if value == -1:
+                return action
+            plays.append([value, action])
+        return sorted(plays, key=lambda x: x[0])[0][1]
+
+
+def maximizer(board):
+    if terminal(board):
+        return utility(board)
+
+    value = -math.inf
+    for action in actions(board):
+        value = max(value, minimizer(result(board, action)))
+    return value
+
+
+def minimizer(board):
+    if terminal(board):
+        return utility(board)
+
+    value = math.inf
+    for action in actions(board):
+        value = min(value, maximizer(result(board, action)))
+    return value
