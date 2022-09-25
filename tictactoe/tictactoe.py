@@ -121,22 +121,32 @@ def minimax(board):
     if terminal(board):
         return None
 
-    plays = []
+    moves = []
     if player(board) == X:
         for action in actions(board):
             value = minimizer(result(board, action))
+
+            """
+            If value of the move is 1 (certain to be winning move) 
+            skip checking remaining moves
+            """
             if value == 1:
                 return action
-            plays.append([value, action])
-        return sorted(plays, key=lambda x: x[0], reverse=True)[0][1]
+            moves.append([value, action])
+        return sorted(moves, key=lambda x: x[0], reverse=True)[0][1]
 
     elif player(board) == O:
         for action in actions(board):
             value = maximizer(result(board, action))
+
+            """
+            If value of the move is -1 (certain to be winning move) 
+            skip checking remaining moves
+            """
             if value == -1:
                 return action
-            plays.append([value, action])
-        return sorted(plays, key=lambda x: x[0])[0][1]
+            moves.append([value, action])
+        return sorted(moves, key=lambda x: x[0])[0][1]
 
 
 def maximizer(board):
